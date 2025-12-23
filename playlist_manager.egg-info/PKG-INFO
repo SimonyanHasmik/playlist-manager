@@ -1,0 +1,124 @@
+Metadata-Version: 2.4
+Name: playlist-manager
+Version: 0.1.1
+Summary: A Python package for playlist management
+Author: Hasmik Simonyan
+Author-email: Hasmik Simonyan <your-email@example.com>
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: requests
+Dynamic: author
+Dynamic: requires-python
+
+# Playlist Manager
+
+## Project Overview
+Playlist Manager is a Python package designed to manage music playlists efficiently. It allows users to create playlists, add or remove songs, and fetch music data from public APIs such as iTunes. The package demonstrates proper Python practices including the use of multiple interrelated classes, encapsulation, properties, and dunder methods like `__repr__`, `__eq__`, and `__len__`. Data persistence is implemented via SQLite, and concurrency is utilized to efficiently handle CPU-bound and I/O-bound tasks. This project is ideal for learning advanced Python concepts while creating a functional application.
+
+## Project Structure│
+```text
+playlist-manager/
+├── playlist_manager/
+│   ├── __init__.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── manager.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   ├── database.py
+│   │   └── seed.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── song.py
+│   └── utils/
+│       ├── __init__.py
+│       └── decorators.py
+├── tests/
+│   ├── test_api_to_db_.py
+│   └── test_db.py
+├── README.md
+├── pyproject.toml
+├── setup.py
+└── requirements.txt
+
+```
+
+## Installation
+
+1. **Create a virtual environment** (optional but recommended):
+
+```powershell
+python -m venv venv
+.\venv\Scripts\activate
+Install the package locally:
+
+pip install -e .
+
+
+Or, after publishing to TestPyPI:
+
+pip install --index-url https://test.pypi.org/simple/ playlist_manager
+
+---
+
+Database Initialization
+
+Create the database and tables:
+
+python -m playlist_manager.db.database
+
+
+Seed the database with initial data (uses multiprocessing + multithreading):
+
+python -m playlist_manager.db.seed
+
+
+The database file playlists.db will be created in the db/ folder.
+
+Using the API
+
+Example usage of the PlaylistManager class:
+
+from playlist_manager.api.manager import PlaylistManager
+from playlist_manager.models.song import Song
+
+# Initialize manager
+manager = PlaylistManager()
+
+# Create a playlist
+manager.create_playlist("My Playlist")
+
+# Add a song
+song = Song("Song Title", "Artist Name", 200, "Pop")
+manager.add_song(1, song)
+
+# Get playlists and songs
+playlists = manager.get_playlists()
+songs = manager.get_songs(1)
+
+print(playlists)
+print(songs)
+
+Concurrency
+
+Multiprocessing: Used in seed.py for CPU-bound tasks (e.g., processing large datasets).
+
+Multithreading: Used in seed.py for I/O-bound tasks (e.g., inserting songs into the database concurrently).
+
+Each method has a clear and justified purpose for performance optimization.
+
+Features
+
+Python package structure with reusable modules.
+
+At least 3 connected classes (PlaylistManager, Song, Database) using composition and encapsulation.
+
+Properties and dunder methods implemented (__repr__, __eq__, __len__).
+
+SQLite-based data persistence.
+
+API class to manage CRUD operations.
+
+Concurrency for large dataset handling.
+
+Ready for publishing to PyPI or TestPyPI.

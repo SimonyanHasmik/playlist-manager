@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=65.5.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "playlist-manager"
+version = "0.1.1"
+description = "A Python package for playlist management"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name="Hasmik Simonyan", email="your-email@example.com" }
+]
+requires-python = ">=3.11"
+
+dependencies = [
+    "requests"
+]
+
