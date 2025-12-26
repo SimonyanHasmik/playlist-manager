@@ -43,8 +43,7 @@ python -m venv venv
 
 You can find the published package on **TestPyPI** at the following link:
 
-https://test.pypi.org/project/playlist-manager/0.1.1/
-
+https://test.pypi.org/project/playlist-manager/0.1.2/
 ---
 
 Database Initialization
