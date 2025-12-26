@@ -38,10 +38,11 @@ playlist-manager/
 ```powershell
 python -m venv venv
 .\venv\Scripts\activate
+```
+## 🔗 TestPyPI Link
 
-After publishing to TestPyPI:
+You can find the published package on **TestPyPI** at the following link:
 
-pip install --index-url 
 https://test.pypi.org/project/playlist-manager/0.1.1/
 
 ---
@@ -60,50 +61,144 @@ python -m playlist_manager.db.seed
 
 The database file playlists.db will be created in the db/ folder.
 
-Using the API
 
-Example usage of the PlaylistManager class:
+## 📦 API Implementation (manager.py)
 
-from playlist_manager.api.manager import PlaylistManager
+This section describes the **actual API implementation** used in the project.  
+The file is located at:
+
+
+The **`PlaylistManager`** class acts as the main API layer.  
+Users interact only with this class — all database logic is encapsulated internally.
+
+---
+
+## 🧠 API Design Overview
+
+- Uses **SQLite** through the `Database` class
+- Applies **encapsulation**: database access is hidden from the user
+- Uses **composition**: `PlaylistManager` owns a `Database` instance
+- Uses a custom decorator `@log_action` for logging API operations
+- Works with domain objects such as `Song`
+
+---
+
+## 🧩 PlaylistManager API Code
+
+```python
+from playlist_manager.db.database import Database
 from playlist_manager.models.song import Song
+from playlist_manager.utils.decorators import log_action
+from typing import List, Optional
 
-# Initialize manager
-manager = PlaylistManager()
 
-# Create a playlist
-manager.create_playlist("My Playlist")
+class PlaylistManager:
+    def __init__(self):
+        self.db = Database()
 
-# Add a song
-song = Song("Song Title", "Artist Name", 200, "Pop")
-manager.add_song(1, song)
+    @log_action
+    def create_playlist(self, name: str):
+        cur = self.db.conn.cursor()
 
-# Get playlists and songs
-playlists = manager.get_playlists()
-songs = manager.get_songs(1)
+        # Check if playlist already exists
+        cur.execute("SELECT id FROM playlists WHERE name=?", (name,))
+        result = cur.fetchone()
 
-print(playlists)
-print(songs)
+        if result:
+            print(f"Playlist '{name}' already exists.")
+            return result[0]
 
-Concurrency
+        # Create new playlist
+        cur.execute("INSERT INTO playlists(name) VALUES (?)", (name,))
+        self.db.conn.commit()
+        print(f"Playlist '{name}' created.")
+        return cur.lastrowid
 
-Multiprocessing: Used in seed.py for CPU-bound tasks (e.g., processing large datasets).
+    @log_action
+    def get_playlists(self):
+        cur = self.db.conn.cursor()
+        cur.execute("SELECT id, name FROM playlists")
+        return cur.fetchall()
 
-Multithreading: Used in seed.py for I/O-bound tasks (e.g., inserting songs into the database concurrently).
+    @log_action
+    def delete_playlist(self, playlist_id: int):
+        cur = self.db.conn.cursor()
 
-Each method has a clear and justified purpose for performance optimization.
+        # Delete songs belonging to the playlist
+        cur.execute("DELETE FROM songs WHERE playlist_id=?", (playlist_id,))
+        cur.execute("DELETE FROM playlists WHERE id=?", (playlist_id,))
+        self.db.conn.commit()
 
-Features
+    # Song Methods
+    def add_song(self, playlist_id: int, song: Song):
+        cur = self.db.conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO songs (playlist_id, title, artist, duration, genre)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (playlist_id, song.title, song.artist, song.duration, song.genre),
+        )
+        self.db.conn.commit()
 
-Python package structure with reusable modules.
+    @log_action
+    def get_songs(self, playlist_id: int):
+        cur = self.db.conn.cursor()
+        cur.execute(
+            """
+            SELECT id, title, artist, duration, genre
+            FROM songs
+            WHERE playlist_id=?
+            """,
+            (playlist_id,),
+        )
+        return cur.fetchall()
 
-At least 3 connected classes (PlaylistManager, Song, Database) using composition and encapsulation.
+    @log_action
+    def delete_song(self, song_id: int):
+        cur = self.db.conn.cursor()
+        cur.execute("DELETE FROM songs WHERE id=?", (song_id,))
+        self.db.conn.commit()
 
-Properties and dunder methods implemented (__repr__, __eq__, __len__).
+    # Utility
+    def get_last_playlist_id(self):
+        cur = self.db.conn.cursor()
+        cur.execute("SELECT id FROM playlists ORDER BY id DESC LIMIT 1")
+        result = cur.fetchone()
+        return result[0] if result else None
+```
+## ⚙️ Concurrency
 
-SQLite-based data persistence.
+Concurrency is applied thoughtfully to improve performance where it truly matters:
 
-API class to manage CRUD operations.
+- **Multiprocessing**
+  - Implemented in `seed.py`
+  - Used for **CPU-bound tasks**, such as processing large datasets
+  - Enables parallel execution across multiple CPU cores
 
-Concurrency for large dataset handling.
+- **Multithreading**
+  - Implemented in `seed.py`
+  - Used for **I/O-bound tasks**, such as inserting large numbers of songs into the database
+  - Improves throughput while waiting for disk I/O operations
 
-Ready for publishing to PyPI or TestPyPI.
+Each concurrency technique is chosen with a **clear and justified purpose**, ensuring efficient and scalable performance.
+
+---
+
+## ✨ Features
+
+- Modular **Python package structure** with reusable components
+- **Object-Oriented Design** using composition and encapsulation
+- At least **three interconnected classes**:
+  - `PlaylistManager`
+  - `Song`
+  - `Database`
+- Implementation of Python **dunder methods**:
+  - `__repr__`
+  - `__eq__`
+  - `__len__`
+- **SQLite-based** persistent data storage
+- Clean **API layer** for full CRUD (Create, Read, Update, Delete) operations
+- Built-in **concurrency support** for handling large datasets efficiently
+- Fully prepared for publishing on **PyPI** or **TestPyPI**
+
